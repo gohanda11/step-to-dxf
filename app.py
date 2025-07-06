@@ -2012,37 +2012,52 @@ def index():
 @app.route('/api/health')
 def health_check():
     """Health check endpoint"""
-    return jsonify({
-        'status': 'ok',
-        'pythonocc_available': HAS_PYTHONOCC,
-        'ezdxf_available': HAS_EZDXF,
-        'python_version': os.sys.version,
-        'flask_version': Flask.__version__
-    })
+    try:
+        import sys
+        return jsonify({
+            'status': 'ok',
+            'pythonocc_available': HAS_PYTHONOCC,
+            'ezdxf_available': HAS_EZDXF,
+            'python_version': sys.version,
+            'flask_version': getattr(Flask, '__version__', 'unknown')
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'pythonocc_available': HAS_PYTHONOCC,
+            'ezdxf_available': HAS_EZDXF
+        }), 500
 
 @app.route('/api/debug')
 def debug_info():
     """Debug information endpoint"""
     try:
         # Test pythonocc import
+        reader_test = "❌ pythonocc-core not available"
         if HAS_PYTHONOCC:
-            from OCC.Core.STEPControl import STEPControl_Reader
-            reader_test = "✅ STEPControl_Reader imported successfully"
-        else:
-            reader_test = "❌ pythonocc-core not available"
+            try:
+                from OCC.Core.STEPControl import STEPControl_Reader
+                reader_test = "✅ STEPControl_Reader imported successfully"
+            except Exception as import_error:
+                reader_test = f"❌ Import error: {str(import_error)}"
         
         return jsonify({
             'pythonocc_status': reader_test,
+            'pythonocc_available': HAS_PYTHONOCC,
             'ezdxf_status': "✅ Available" if HAS_EZDXF else "❌ Not available",
             'temp_dir': tempfile.gettempdir(),
-            'max_content_length': app.config['MAX_CONTENT_LENGTH'],
+            'max_content_length': app.config.get('MAX_CONTENT_LENGTH', 'unknown'),
             'sessions_count': len(sessions)
         })
     except Exception as e:
+        import traceback
         return jsonify({
             'error': str(e),
-            'traceback': str(e.__traceback__)
-        })
+            'traceback': traceback.format_exc(),
+            'pythonocc_available': HAS_PYTHONOCC,
+            'ezdxf_available': HAS_EZDXF
+        }), 500
 
 @app.route('/api/upload', methods=['POST'])
 def upload_step_file():
