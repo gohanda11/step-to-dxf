@@ -1,11 +1,10 @@
-FROM python:3.9-slim
+FROM continuumio/miniconda3:latest
 
 WORKDIR /app
 
 # システム依存関係をインストール
 RUN apt-get update && apt-get install -y \
     build-essential \
-    cmake \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
@@ -14,9 +13,25 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Python依存関係をインストール
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# conda環境をセットアップ
+RUN conda config --add channels conda-forge && \
+    conda config --set channel_priority strict
+
+# pythonocc-coreとその他の依存関係をインストール
+RUN conda install -y -c conda-forge \
+    pythonocc-core \
+    flask=2.3.3 \
+    numpy \
+    matplotlib \
+    python=3.9 \
+    && conda clean --all -f -y
+
+# pip経由でその他の依存関係をインストール
+RUN pip install --no-cache-dir \
+    ezdxf>=1.0.0 \
+    Werkzeug==2.3.7 \
+    svgwrite \
+    gunicorn
 
 # アプリケーションコードをコピー
 COPY . .
