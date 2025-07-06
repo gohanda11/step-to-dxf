@@ -1418,7 +1418,18 @@
         // Add system check function
         async function checkSystemStatus() {
             try {
+                console.log('Checking system status...');
+                
                 const response = await fetch('/api/health');
+                console.log('Health check response status:', response.status);
+                
+                if (!response.ok) {
+                    console.error('Health check failed with status:', response.status);
+                    const errorText = await response.text();
+                    console.error('Health check error:', errorText);
+                    return;
+                }
+                
                 const status = await response.json();
                 console.log('System status:', status);
                 
@@ -1430,12 +1441,25 @@
                     }
                 }
                 
-                const debugResponse = await fetch('/api/debug');
-                const debugInfo = await debugResponse.json();
-                console.log('Debug info:', debugInfo);
+                // Try debug endpoint
+                try {
+                    const debugResponse = await fetch('/api/debug');
+                    if (debugResponse.ok) {
+                        const debugInfo = await debugResponse.json();
+                        console.log('Debug info:', debugInfo);
+                    } else {
+                        console.warn('Debug endpoint failed:', debugResponse.status);
+                    }
+                } catch (debugError) {
+                    console.warn('Debug check failed:', debugError);
+                }
                 
             } catch (error) {
                 console.error('Failed to check system status:', error);
+                const statusDiv = document.getElementById('uploadStatus');
+                if (statusDiv) {
+                    statusDiv.innerHTML = '<div class="status error">❌ System initialization failed. Please refresh the page.</div>';
+                }
             }
         }
         
