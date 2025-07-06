@@ -2009,6 +2009,41 @@ def index():
     """Main page"""
     return render_template('index.html')
 
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'ok',
+        'pythonocc_available': HAS_PYTHONOCC,
+        'ezdxf_available': HAS_EZDXF,
+        'python_version': os.sys.version,
+        'flask_version': Flask.__version__
+    })
+
+@app.route('/api/debug')
+def debug_info():
+    """Debug information endpoint"""
+    try:
+        # Test pythonocc import
+        if HAS_PYTHONOCC:
+            from OCC.Core.STEPControl import STEPControl_Reader
+            reader_test = "✅ STEPControl_Reader imported successfully"
+        else:
+            reader_test = "❌ pythonocc-core not available"
+        
+        return jsonify({
+            'pythonocc_status': reader_test,
+            'ezdxf_status': "✅ Available" if HAS_EZDXF else "❌ Not available",
+            'temp_dir': tempfile.gettempdir(),
+            'max_content_length': app.config['MAX_CONTENT_LENGTH'],
+            'sessions_count': len(sessions)
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'traceback': str(e.__traceback__)
+        })
+
 @app.route('/api/upload', methods=['POST'])
 def upload_step_file():
     """Upload and process STEP file"""
