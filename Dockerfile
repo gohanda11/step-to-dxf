@@ -17,14 +17,17 @@ RUN apt-get update && apt-get install -y \
 RUN conda config --add channels conda-forge && \
     conda config --set channel_priority strict
 
-# pythonocc-coreとその他の依存関係をインストール
-RUN conda install -y -c conda-forge \
+# Python 3.9を明示的にインストールしてからpythonocc-coreをインストール
+RUN conda install -y -c conda-forge python=3.9 && \
+    conda install -y -c conda-forge \
     pythonocc-core \
     flask=2.3.3 \
     numpy \
     matplotlib \
-    python=3.9 \
     && conda clean --all -f -y
+
+# インストール確認
+RUN python -c "from OCC.Core.STEPControl import STEPControl_Reader; print('pythonocc-core successfully installed')"
 
 # pip経由でその他の依存関係をインストール
 RUN pip install --no-cache-dir \
