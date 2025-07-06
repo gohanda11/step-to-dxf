@@ -1415,8 +1415,35 @@
             }
         }
         
+        // Add system check function
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch('/api/health');
+                const status = await response.json();
+                console.log('System status:', status);
+                
+                if (!status.pythonocc_available) {
+                    console.error('pythonocc-core is not available!');
+                    const statusDiv = document.getElementById('uploadStatus');
+                    if (statusDiv) {
+                        statusDiv.innerHTML = '<div class="status error">❌ System Error: STEP processing not available</div>';
+                    }
+                }
+                
+                const debugResponse = await fetch('/api/debug');
+                const debugInfo = await debugResponse.json();
+                console.log('Debug info:', debugInfo);
+                
+            } catch (error) {
+                console.error('Failed to check system status:', error);
+            }
+        }
+        
         // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', initViewer);
+        document.addEventListener('DOMContentLoaded', () => {
+            initViewer();
+            checkSystemStatus();
+        });
     </script>
 </body>
 </html>
