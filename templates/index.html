@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STEP to DXF/SVG Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 1.1em;
+        }
+        
+        .help-icon {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+        }
+        
+        .help-icon:hover {
+            background: linear-gradient(135deg, #3182ce, #2c5282);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(66, 153, 225, 0.4);
+        }
+        
+        /* Help Popup Styles */
+        .help-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .help-popup {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .help-popup h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .help-content {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        
+        .help-content h4 {
+            color: #2d3748;
+            margin: 20px 0 10px 0;
+            font-size: 1.1em;
+        }
+        
+        .help-content ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .help-content li {
+            margin-bottom: 8px;
+        }
+        
+        .help-close-btn {
+            display: block;
+            margin: 25px auto 0;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .help-close-btn:hover {
+            background: linear-gradient(135deg, #3182ce, #2c5282);
+            transform: translateY(-1px);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+        
+        .viewer-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            border-left: 4px solid #4299e1;
+        }
+        
+        .section h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-label {
+            display: block;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .file-label:hover {
+            background: linear-gradient(135deg, #3182ce, #2c5282);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 153, 225, 0.4);
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        
+        .status.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+        
+        .status.success {
+            background: #c6f6d5;
+            color: #276749;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .status.error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+        
+        .face-list {
+            height: calc(100vh - 400px);
+            min-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+        }
+        
+        .face-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .face-item:hover {
+            background: #f0f8ff;
+            transform: translateX(5px);
+        }
+        
+        .face-item.selected {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+        }
+        
+        .face-item.hovered {
+            background: #ffeaa7;
+            transform: translateX(10px);
+            box-shadow: 0 3px 10px rgba(255, 234, 167, 0.5);
+        }
+        
+        .face-info {
+            flex: 1;
+        }
+        
+        .face-type {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+        
+        .export-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s ease;
+        }
+        
+        .export-btn:hover {
+            background: #38a169;
+            transform: scale(1.05);
+        }
+        
+        .export-btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        
+        #viewer {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            background: #1a202c;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #718096;
+            font-size: 1.1em;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-radius: 50%;
+            border-top-color: #4299e1;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        
+        /* Export Dialog Styles */
+        .export-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .export-dialog {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .export-dialog h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            text-align: center;
+        }
+        
+        .dialog-section {
+            margin-bottom: 20px;
+        }
+        
+        .dialog-section label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .dialog-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.2s ease;
+        }
+        
+        .dialog-input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+        
+        .dialog-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+        
+        .dialog-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .dialog-btn.primary {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+        
+        .dialog-btn.primary:hover {
+            background: linear-gradient(135deg, #38a169, #2f855a);
+            transform: translateY(-1px);
+        }
+        
+        .dialog-btn.secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .dialog-btn.secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .dialog-info {
+            background: #f0f8ff;
+            border: 1px solid #bee3f8;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #2c5282;
+        }
+        
+        .dialog-info strong {
+            color: #1a365d;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+            
+            .viewer-container {
+                order: 1;
+                height: 400px;
+            }
+            
+            .export-dialog {
+                margin: 20px;
+                width: calc(100% - 40px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔧 STEP to DXF/SVG Converter</h1>
+            <p>Upload STEP files, select faces interactively, and export to DXF or SVG format</p>
+            <button class="help-icon" onclick="showHelpPopup()" title="How to Use">
+                ?
+            </button>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- File Upload -->
+                <div class="section">
+                    <h3>📁 Upload STEP File</h3>
+                    <div class="file-upload">
+                        <input type="file" id="stepFile" class="file-input" accept=".step,.stp">
+                        <label for="stepFile" class="file-label">
+                            Choose STEP File (.step, .stp)
+                        </label>
+                    </div>
+                    <div id="uploadStatus"></div>
+                </div>
+                
+                <!-- Face Selection -->
+                <div class="section">
+                    <h3>🎯 Select Face</h3>
+                    <div id="faceList" class="face-list">
+                        <div class="status info">
+                            Upload a STEP file to see available faces
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+            
+            <!-- 3D Viewer -->
+            <div class="viewer-container">
+                <div id="viewer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Ready to load STEP file...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let currentSessionId = null;
+        let faceObjects = [];
+        let selectedFace = null;
+        let hoveredFace = null;
+        let currentFaces = [];
+        
+        // Initialize 3D viewer
+        function initViewer() {
+            const viewerElement = document.getElementById('viewer');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a202c);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, viewerElement.clientWidth / viewerElement.clientHeight, 0.1, 1000);
+            camera.position.set(100, 100, 100);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(viewerElement.clientWidth, viewerElement.clientHeight);
+            renderer.shadowMap.enabled = false; // Disable shadow mapping to prevent dark areas
+            
+            viewerElement.innerHTML = '';
+            viewerElement.appendChild(renderer.domElement);
+            
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Lighting - improved for better overall illumination
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6); // Increased ambient light
+            scene.add(ambientLight);
+            
+            // Top lighting
+            const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight1.position.set(100, 100, 50);
+            directionalLight1.castShadow = false; // Disable shadow casting to prevent dark areas
+            scene.add(directionalLight1);
+            
+            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+            directionalLight2.position.set(-50, -50, 100);
+            scene.add(directionalLight2);
+            
+            // Add light from below to illuminate bottom faces
+            const directionalLight3 = new THREE.DirectionalLight(0xffffff, 0.3);
+            directionalLight3.position.set(0, -100, 0);
+            scene.add(directionalLight3);
+            
+            const pointLight = new THREE.PointLight(0xffffff, 0.5, 1000);
+            pointLight.position.set(0, 0, 100);
+            scene.add(pointLight);
+            
+            // Mouse interaction
+            setupMouseInteraction();
+            
+            // Start render loop
+            animate();
+        }
+        
+        function setupMouseInteraction() {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            
+            
+            // Variables to track mouse drag vs click
+            let mouseDownPosition = null;
+            let isDragging = false;
+            let dragThreshold = 3; // pixels - reduced for more sensitive detection
+            let mouseDownTime = 0;
+            let isMouseDown = false;
+            
+            function onMouseDown(event) {
+                mouseDownPosition = { x: event.clientX, y: event.clientY };
+                mouseDownTime = Date.now();
+                isDragging = false;
+                isMouseDown = true;
+                console.log('Mouse down at:', mouseDownPosition, 'time:', mouseDownTime);
+            }
+            
+            function onMouseUp(event) {
+                isMouseDown = false;
+                
+                // Reset drag state after a short delay to prevent immediate face selection
+                setTimeout(() => {
+                    isDragging = false;
+                    mouseDownPosition = null;
+                }, 50);
+            }
+            
+            function onMouseMove(event) {
+                // Calculate mouse distance from mousedown position
+                if (mouseDownPosition && isMouseDown) {
+                    const deltaX = event.clientX - mouseDownPosition.x;
+                    const deltaY = event.clientY - mouseDownPosition.y;
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                    
+                    if (distance > dragThreshold) {
+                        isDragging = true;
+                    }
+                }
+                
+                // Face highlighting logic - only active when not dragging and not holding mouse down
+                if (!isDragging && !isMouseDown) {
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    const mouse = new THREE.Vector2();
+                    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                    
+                    raycaster.setFromCamera(mouse, camera);
+                    
+                    if (faceObjects.length > 0) {
+                        const intersects = raycaster.intersectObjects(faceObjects);
+                        
+                        if (intersects.length > 0) {
+                            const intersectedFace = intersects[0].object;
+                            
+                            if (intersectedFace !== hoveredFace) {
+                                // Remove previous hover
+                                if (hoveredFace && hoveredFace !== selectedFace) {
+                                    hoveredFace.material.color.setHex(0x4299e1);
+                                }
+                                
+                                // Set new hover (only if not currently selected)
+                                hoveredFace = intersectedFace;
+                                if (hoveredFace !== selectedFace) {
+                                    hoveredFace.material.color.setHex(0xffd700); // Yellow
+                                }
+                                
+                                // Update face list hover
+                                const faceId = hoveredFace.userData.faceId;
+                                updateFaceListHover(faceId);
+                            }
+                        } else {
+                            // No hover
+                            if (hoveredFace && hoveredFace !== selectedFace) {
+                                hoveredFace.material.color.setHex(0x4299e1);
+                            }
+                            hoveredFace = null;
+                            updateFaceListHover(null);
+                        }
+                    }
+                } else if (isDragging || isMouseDown) {
+                    // Clear hover during drag operations
+                    if (hoveredFace && hoveredFace !== selectedFace) {
+                        hoveredFace.material.color.setHex(0x4299e1);
+                    }
+                    hoveredFace = null;
+                    updateFaceListHover(null);
+                }
+            }
+            
+            function onMouseClick(event) {
+                // Only select face if:
+                // 1. Not dragging
+                // 2. Mouse was not held down for too long (not a drag operation) OR mouseDownTime is 0 (fallback)
+                // 3. There's a valid face at click position
+                const clickDuration = mouseDownTime > 0 ? Date.now() - mouseDownTime : 0;
+                const maxClickDuration = 500; // ms - increased from 200ms
+                
+                console.log('Click event - isDragging:', isDragging, 'clickDuration:', clickDuration, 'maxClickDuration:', maxClickDuration, 'mouseDownTime:', mouseDownTime);
+                
+                // Allow click if not dragging AND (short click duration OR mouseDownTime not set)
+                if (!isDragging && (clickDuration < maxClickDuration || mouseDownTime === 0)) {
+                    // Re-calculate intersections at click position to ensure accuracy
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    const mouse = new THREE.Vector2();
+                    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                    
+                    raycaster.setFromCamera(mouse, camera);
+                    
+                    if (faceObjects.length > 0) {
+                        const intersects = raycaster.intersectObjects(faceObjects);
+                        
+                        console.log('Intersects found:', intersects.length);
+                        
+                        if (intersects.length > 0) {
+                            const intersectedFace = intersects[0].object;
+                            console.log('Selecting face:', intersectedFace.userData.faceId);
+                            selectFace(intersectedFace);
+                        } else {
+                            console.log('No face intersected at click position');
+                        }
+                    } else {
+                        console.log('No face objects available');
+                    }
+                } else {
+                    console.log('Click ignored - isDragging:', isDragging, 'clickDuration:', clickDuration);
+                }
+            }
+            
+            renderer.domElement.addEventListener('mousedown', onMouseDown);
+            renderer.domElement.addEventListener('mouseup', onMouseUp);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('click', onMouseClick);
+        }
+        
+        function selectFace(faceObject) {
+            // Remove previous selection
+            if (selectedFace) {
+                selectedFace.material.color.setHex(0x4299e1);
+            }
+            
+            // Set new selection
+            selectedFace = faceObject;
+            selectedFace.material.color.setHex(0xff0000); // Red
+            
+            // Update UI and scroll to selected face
+            const faceId = selectedFace.userData.faceId;
+            updateFaceListSelection(faceId);
+            
+            console.log(`Selected face ${faceId + 1}`);
+        }
+        
+        function updateFaceListHover(faceId) {
+            document.querySelectorAll('.face-item').forEach(item => {
+                item.classList.remove('hovered');
+            });
+            
+            if (faceId !== null) {
+                const item = document.querySelector(`[data-face-id="${faceId}"]`);
+                if (item) {
+                    item.classList.add('hovered');
+                }
+            }
+        }
+        
+        function updateFaceListSelection(faceId) {
+            // 前回のハイライト効果をクリア
+            clearPreviousHighlights();
+            
+            document.querySelectorAll('.face-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            if (faceId !== null) {
+                const item = document.querySelector(`[data-face-id="${faceId}"]`);
+                if (item) {
+                    item.classList.add('selected');
+                    
+                    console.log(`Updating selection for face ${faceId + 1}`);
+                    
+                    // スクロールして選択された面を表示
+                    // 少し遅延させてDOMが更新されてからスクロール
+                    setTimeout(() => {
+                        scrollToSelectedFace(item);
+                        
+                        // フォールバック: 標準のscrollIntoViewも試す
+                        setTimeout(() => {
+                            try {
+                                item.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center'
+                                });
+                                console.log('Used scrollIntoView as fallback');
+                            } catch (e) {
+                                console.log('scrollIntoView failed:', e);
+                            }
+                        }, 100);
+                    }, 50);
+                }
+            }
+        }
+        
+        // ハイライト効果を管理するための変数
+        let highlightTimeouts = [];
+        
+        function clearPreviousHighlights() {
+            // 進行中のハイライト効果をすべてクリア
+            highlightTimeouts.forEach(timeout => {
+                clearTimeout(timeout);
+            });
+            highlightTimeouts = [];
+            
+            // すべての面のハイライト効果をリセット
+            document.querySelectorAll('.face-item').forEach(item => {
+                item.style.transition = '';
+                item.style.backgroundColor = '';
+            });
+        }
+        
+        function scrollToSelectedFace(faceItem) {
+            const faceList = document.getElementById('faceList');
+            
+            // デバッグ情報
+            console.log('Scrolling to face item:', faceItem);
+            
+            // 要素がコンテナ内で見える位置を計算
+            const containerHeight = faceList.clientHeight;
+            const containerScrollTop = faceList.scrollTop;
+            const itemOffsetTop = faceItem.offsetTop;
+            const itemHeight = faceItem.offsetHeight;
+            
+            console.log('Container height:', containerHeight);
+            console.log('Current scroll top:', containerScrollTop);
+            console.log('Item offset top:', itemOffsetTop);
+            console.log('Item height:', itemHeight);
+            
+            // 要素がビューポート内に完全に見えるかチェック
+            const itemTop = itemOffsetTop;
+            const itemBottom = itemOffsetTop + itemHeight;
+            const viewportTop = containerScrollTop;
+            const viewportBottom = containerScrollTop + containerHeight;
+            
+            let shouldScroll = false;
+            let newScrollTop = containerScrollTop;
+            
+            // 要素がビューポートの上に隠れている場合
+            if (itemTop < viewportTop) {
+                newScrollTop = itemTop - 20; // 20px の余裕
+                shouldScroll = true;
+                console.log('Item is above viewport, scrolling up');
+            }
+            // 要素がビューポートの下に隠れている場合
+            else if (itemBottom > viewportBottom) {
+                newScrollTop = itemBottom - containerHeight + 20; // 20px の余裕
+                shouldScroll = true;
+                console.log('Item is below viewport, scrolling down');
+            }
+            
+            if (shouldScroll) {
+                console.log('Scrolling to:', newScrollTop);
+                faceList.scrollTo({
+                    top: Math.max(0, newScrollTop), // 負の値を防ぐ
+                    behavior: 'smooth'
+                });
+            } else {
+                console.log('Item is already visible, no scroll needed');
+            }
+            
+            // 短時間のハイライト効果を追加（管理されたタイムアウト付き）
+            faceItem.style.transition = 'background-color 0.3s ease';
+            faceItem.style.backgroundColor = '#ffd700'; // 黄色でハイライト
+            
+            // タイムアウトを管理配列に追加
+            const timeout1 = setTimeout(() => {
+                // 元の背景色をリセット（白に戻す）
+                faceItem.style.backgroundColor = '';
+                
+                const timeout2 = setTimeout(() => {
+                    faceItem.style.transition = '';
+                    // タイムアウト配列から削除
+                    highlightTimeouts = highlightTimeouts.filter(t => t !== timeout1 && t !== timeout2);
+                }, 300);
+                
+                highlightTimeouts.push(timeout2);
+            }, 800);
+            
+            highlightTimeouts.push(timeout1);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const viewerElement = document.getElementById('viewer');
+            camera.aspect = viewerElement.clientWidth / viewerElement.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(viewerElement.clientWidth, viewerElement.clientHeight);
+        });
+        
+        // File upload handling
+        document.getElementById('stepFile').addEventListener('change', handleFileUpload);
+        
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // ファイル名を保存
+            localStorage.setItem('currentFileName', file.name);
+            
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = '<div class="status info"><div class="spinner"></div>Processing STEP file...</div>';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                console.log('Attempting to upload file:', file.name);
+                
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server error:', errorText);
+                    statusDiv.innerHTML = `<div class="status error">❌ Server error (${response.status}): ${errorText}</div>`;
+                    return;
+                }
+                
+                const result = await response.json();
+                console.log('Server response:', result);
+                
+                if (result.success) {
+                    currentSessionId = result.session_id;
+                    statusDiv.innerHTML = `<div class="status success">✅ Successfully loaded ${result.face_count} faces</div>`;
+                    
+                    console.log('Upload successful:', result);
+                    console.log('Face data:', result.faces);
+                    
+                    // Update face list
+                    updateFaceList(result.faces);
+                    
+                    // Load 3D model
+                    load3DModel(result.faces);
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">❌ Error: ${result.error}</div>`;
+                    console.error('Upload failed:', result);
+                }
+            } catch (error) {
+                console.error('Upload error details:', error);
+                statusDiv.innerHTML = `<div class="status error">❌ Upload failed: ${error.message}</div>`;
+            }
+        }
+        
+        function updateFaceList(faces) {
+            const faceList = document.getElementById('faceList');
+            
+            if (faces.length === 0) {
+                faceList.innerHTML = '<div class="status info">No faces found in STEP file</div>';
+                return;
+            }
+            
+            faceList.innerHTML = faces.map(face => `
+                <div class="face-item" data-face-id="${face.id}" onclick="selectFaceFromList(${face.id})">
+                    <div class="face-info">
+                        <div>Face ${face.id + 1}</div>
+                        <div class="face-type">${face.type}</div>
+                    </div>
+                    <div>
+                        <button class="export-btn" onclick="showExportDialog(${face.id}); event.stopPropagation();">
+                            Export
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function selectFaceFromList(faceId) {
+            const faceObject = faceObjects.find(obj => obj.userData.faceId === faceId);
+            if (faceObject) {
+                selectFace(faceObject);
+                
+                // 3Dビューワーで該当面にフォーカス
+                focusOnFace(faceObject);
+            }
+        }
+        
+        function focusOnFace(faceObject) {
+            // 面の境界ボックスを計算
+            const faceBox = new THREE.Box3().setFromObject(faceObject);
+            const faceCenter = faceBox.getCenter(new THREE.Vector3());
+            const faceSize = faceBox.getSize(new THREE.Vector3());
+            const maxFaceDim = Math.max(faceSize.x, faceSize.y, faceSize.z);
+            
+            // モデル全体の境界ボックスを計算
+            const modelBox = new THREE.Box3();
+            faceObjects.forEach(obj => modelBox.expandByObject(obj));
+            const modelSize = modelBox.getSize(new THREE.Vector3());
+            const maxModelDim = Math.max(modelSize.x, modelSize.y, modelSize.z);
+            
+            // 面の法線ベクトルを取得
+            const faceId = faceObject.userData.faceId;
+            const faceData = currentFaces.find(f => f.id === faceId);
+            
+            let normal = new THREE.Vector3(0, 0, 1); // デフォルト法線
+            if (faceData && faceData.normal) {
+                normal = new THREE.Vector3(faceData.normal[0], faceData.normal[1], faceData.normal[2]);
+            }
+            
+            // モデルとの衝突を避けるための安全距離を計算
+            const safeDistance = Math.max(maxModelDim * 1.5, maxFaceDim * 3, 20);
+            
+            // 法線方向のカメラ位置を計算
+            const normalPosition = faceCenter.clone().add(normal.multiplyScalar(safeDistance));
+            
+            // モデルの境界ボックス内にカメラが入るかチェック
+            const expandedModelBox = modelBox.clone().expandByScalar(maxModelDim * 0.1);
+            const isInsideModel = expandedModelBox.containsPoint(normalPosition);
+            
+            let finalPosition;
+            if (isInsideModel) {
+                // モデル内部の場合は斜めからの角度に調整
+                console.log('Camera would be inside model, adjusting to diagonal view');
+                
+                // 法線ベクトルに垂直な2つのベクトルを作成
+                const up = new THREE.Vector3(0, 1, 0);
+                const right = new THREE.Vector3().crossVectors(normal, up).normalize();
+                
+                // rightベクトルがゼロの場合（法線が垂直の場合）は別の軸を使用
+                if (right.length() < 0.1) {
+                    right.set(1, 0, 0).cross(normal).normalize();
+                }
+                
+                const adjustedUp = new THREE.Vector3().crossVectors(right, normal).normalize();
+                
+                // 斜めからの角度を作成（法線方向 + 右方向 + 上方向）
+                const diagonalDirection = normal.clone()
+                    .add(right.multiplyScalar(0.5))
+                    .add(adjustedUp.multiplyScalar(0.3))
+                    .normalize();
+                
+                finalPosition = faceCenter.clone().add(diagonalDirection.multiplyScalar(safeDistance));
+                
+                // それでもモデル内部の場合は、さらに距離を増やす
+                if (expandedModelBox.containsPoint(finalPosition)) {
+                    finalPosition = faceCenter.clone().add(diagonalDirection.multiplyScalar(safeDistance * 2));
+                }
+            } else {
+                // モデル外部の場合は法線方向を使用
+                finalPosition = normalPosition;
+            }
+            
+            // スムーズなカメラ移動をアニメーション
+            animateCameraTo(finalPosition, faceCenter);
+        }
+        
+        function animateCameraTo(targetPosition, targetLookAt) {
+            const startPosition = camera.position.clone();
+            const startLookAt = controls.target.clone();
+            
+            let progress = 0;
+            const duration = 1000; // 1秒
+            const startTime = Date.now();
+            
+            function updateCamera() {
+                const elapsed = Date.now() - startTime;
+                progress = Math.min(elapsed / duration, 1);
+                
+                // イージング関数（ease-out）
+                const eased = 1 - Math.pow(1 - progress, 3);
+                
+                // カメラ位置の補間
+                camera.position.lerpVectors(startPosition, targetPosition, eased);
+                
+                // 見る方向の補間
+                const currentLookAt = new THREE.Vector3().lerpVectors(startLookAt, targetLookAt, eased);
+                controls.target.copy(currentLookAt);
+                controls.update();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateCamera);
+                }
+            }
+            
+            updateCamera();
+        }
+        
+        function load3DModel(faces) {
+            console.log('Loading 3D model with', faces.length, 'faces');
+            
+            // Store faces data for camera positioning
+            currentFaces = faces;
+            
+            // Clear existing objects
+            faceObjects.forEach(obj => scene.remove(obj));
+            faceObjects = [];
+            
+            // Add faces to scene
+            faces.forEach(face => {
+                console.log('Processing face:', face.id, 'Type:', face.type);
+                try {
+                    const geometry = new THREE.BufferGeometry();
+                    
+                    // Create vertices array
+                    const vertices = [];
+                    const indices = [];
+                    
+                    if (face.mesh && face.mesh.vertices && face.mesh.triangles) {
+                        face.mesh.vertices.forEach(vertex => {
+                            vertices.push(vertex[0], vertex[1], vertex[2]);
+                        });
+                        
+                        face.mesh.triangles.forEach(triangle => {
+                            indices.push(triangle[0], triangle[1], triangle[2]);
+                        });
+                        
+                        // Validate mesh data
+                        if (vertices.length >= 9 && indices.length >= 3) { // At least one triangle
+                            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+                            geometry.setIndex(indices);
+                            geometry.computeVertexNormals();
+                            
+                            const material = new THREE.MeshPhongMaterial({ 
+                                color: 0x4299e1,
+                                transparent: false,
+                                opacity: 1.0,
+                                side: THREE.DoubleSide,
+                                shininess: 30,
+                                specular: 0x111111
+                            });
+                            
+                            const mesh = new THREE.Mesh(geometry, material);
+                            mesh.userData.faceId = face.id;
+                            
+                            scene.add(mesh);
+                            faceObjects.push(mesh);
+                            
+                            console.log(`Successfully added face ${face.id} with ${vertices.length/3} vertices and ${indices.length/3} triangles`);
+                        } else {
+                            console.warn(`Face ${face.id} has insufficient mesh data: ${vertices.length/3} vertices, ${indices.length/3} triangles`);
+                        }
+                    } else {
+                        console.warn(`Face ${face.id} missing mesh data`);
+                    }
+                } catch (error) {
+                    console.error(`Error creating mesh for face ${face.id}:`, error);
+                }
+            });
+            
+            // Center camera on model
+            if (faceObjects.length > 0) {
+                const box = new THREE.Box3();
+                faceObjects.forEach(obj => box.expandByObject(obj));
+                
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                
+                console.log('Model bounds:', { center, size, maxDim });
+                
+                // Position camera at appropriate distance
+                const distance = maxDim * 2;
+                camera.position.set(
+                    center.x + distance,
+                    center.y + distance,
+                    center.z + distance
+                );
+                controls.target.copy(center);
+                controls.update();
+                
+                console.log('Camera positioned at:', camera.position);
+            } else {
+                console.warn('No face objects created for camera positioning');
+            }
+        }
+        
+        function showExportDialog(faceId) {
+            if (!currentSessionId) {
+                alert('No STEP file loaded');
+                return;
+            }
+            
+            // 元のファイル名から基本名を取得
+            let baseFileName = 'face';
+            // ファイル名をlocalStorageから取得するか、グローバル変数に保存
+            const savedFileName = localStorage.getItem('currentFileName');
+            if (savedFileName) {
+                baseFileName = savedFileName.replace(/\.(step|stp)$/i, '');
+            }
+            
+            // デフォルトのファイル名を生成
+            const defaultFileName = `${baseFileName}_face_${faceId + 1}`;
+            
+            // ダイアログHTML
+            const dialogHTML = `
+                <div class="export-dialog-overlay" id="exportDialogOverlay">
+                    <div class="export-dialog">
+                        <h3>📁 Export CAD File</h3>
+                        
+                        <div class="dialog-info">
+                            Export <strong>Face ${faceId + 1}</strong> as CAD file.<br>
+                            Customize the filename and file format, then click "Export".
+                        </div>
+                        
+                        <div class="dialog-section">
+                            <label for="exportFileName">File name:</label>
+                            <input type="text" id="exportFileName" class="dialog-input" value="${defaultFileName}" 
+                                   placeholder="e.g., my_part_face_1">
+                        </div>
+                        
+                        <div class="dialog-section">
+                            <label for="exportFormat">File format:</label>
+                            <select id="exportFormat" class="dialog-input">
+                                <option value="dxf">DXF (.dxf)</option>
+                                <option value="svg">SVG (.svg)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="dialog-buttons">
+                            <button class="dialog-btn secondary" onclick="closeExportDialog()">
+                                Cancel
+                            </button>
+                            <button class="dialog-btn primary" onclick="exportFaceWithCustomName(${faceId})">
+                                📁 Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // ダイアログを表示
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+            
+            // ファイル名入力欄にフォーカス
+            const fileNameInput = document.getElementById('exportFileName');
+            fileNameInput.focus();
+            fileNameInput.select();
+            
+            // Enterキーでエクスポート
+            fileNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    exportFaceWithCustomName(faceId);
+                }
+            });
+            
+            // Escapeキーでキャンセル
+            document.addEventListener('keydown', function escapeHandler(e) {
+                if (e.key === 'Escape') {
+                    closeExportDialog();
+                    document.removeEventListener('keydown', escapeHandler);
+                }
+            });
+            
+            // オーバーレイクリックでキャンセル
+            document.getElementById('exportDialogOverlay').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeExportDialog();
+                }
+            });
+        }
+        
+        function closeExportDialog() {
+            const overlay = document.getElementById('exportDialogOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+        
+        async function exportFaceWithCustomName(faceId) {
+            const fileNameInput = document.getElementById('exportFileName');
+            const formatSelect = document.getElementById('exportFormat');
+            let fileName = fileNameInput.value.trim();
+            const format = formatSelect.value;
+            
+            if (!fileName) {
+                alert('Please enter a filename');
+                fileNameInput.focus();
+                return;
+            }
+            
+            // 適切な拡張子を付ける
+            const extension = format === 'svg' ? '.svg' : '.dxf';
+            if (!fileName.toLowerCase().endsWith(extension)) {
+                // 既に他の拡張子がある場合は置き換え
+                fileName = fileName.replace(/\.(dxf|svg)$/i, '') + extension;
+            }
+            
+            // ダイアログを閉じる
+            closeExportDialog();
+            
+            try {
+                const response = await fetch(`/api/export-face/${currentSessionId}/${faceId}?format=${format}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    console.log(`Face ${faceId + 1} exported as: ${fileName}`);
+                    
+                    // 成功メッセージを表示
+                    showTemporaryMessage(`✅ ${fileName} downloaded successfully`, 'success');
+                } else {
+                    const error = await response.json();
+                    alert(`Export failed: ${error.error}`);
+                }
+            } catch (error) {
+                alert(`Export failed: ${error.message}`);
+            }
+        }
+        
+        function showTemporaryMessage(message, type = 'info') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `status ${type}`;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.right = '20px';
+            messageDiv.style.zIndex = '1100';
+            messageDiv.style.maxWidth = '400px';
+            messageDiv.innerHTML = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 4000);
+        }
+        
+        // 従来のexportFace関数（後方互換性のため）
+        async function exportFace(faceId) {
+            showExportDialog(faceId);
+        }
+        
+        function showHelpPopup() {
+            const helpHTML = `
+                <div class="help-popup-overlay" id="helpPopupOverlay">
+                    <div class="help-popup">
+                        <h3>💡 How to Use STEP to DXF/SVG Converter</h3>
+                        
+                        <div class="help-content">
+                            <h4>📁 Upload STEP File</h4>
+                            <ul>
+                                <li>Click "Choose STEP File" button and select your .step or .stp file</li>
+                                <li>The file will be automatically processed and displayed in the 3D viewer</li>
+                                <li>Maximum file size: 16MB</li>
+                            </ul>
+                            
+                            <h4>🎯 Select Faces</h4>
+                            <ul>
+                                <li><strong>Hover:</strong> Move mouse over faces to see yellow highlight</li>
+                                <li><strong>Click:</strong> Click on faces to select them (red highlight)</li>
+                                <li><strong>List:</strong> Click on faces in the sidebar list to select and focus</li>
+                                <li>Selected face will be highlighted in both 3D viewer and face list</li>
+                            </ul>
+                            
+                            <h4>🎮 3D Viewer Controls</h4>
+                            <ul>
+                                <li><strong>Rotate:</strong> Left-click and drag to rotate the model</li>
+                                <li><strong>Zoom:</strong> Mouse wheel to zoom in/out</li>
+                                <li><strong>Pan:</strong> Right-click and drag to move the view</li>
+                            </ul>
+                            
+                            <h4>📥 Export to DXF/SVG</h4>
+                            <ul>
+                                <li>Click "Export" button next to the desired face</li>
+                                <li>Choose format: DXF or SVG from the dropdown</li>
+                                <li>Customize the filename in the dialog</li>
+                                <li>Click "Export" to download the file</li>
+                                <li>The export will contain the face geometry as seen from the front view</li>
+                                <li>Circles and arcs are preserved as proper geometric entities</li>
+                                <li><strong>DXF:</strong> Professional CAD format for technical drawings</li>
+                                <li><strong>SVG:</strong> Vector graphics format with real-world dimensions (mm)</li>
+                            </ul>
+                        </div>
+                        
+                        <button class="help-close-btn" onclick="closeHelpPopup()">
+                            Got it!
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', helpHTML);
+            
+            // Close with Escape key
+            document.addEventListener('keydown', function escapeHandler(e) {
+                if (e.key === 'Escape') {
+                    closeHelpPopup();
+                    document.removeEventListener('keydown', escapeHandler);
+                }
+            });
+            
+            // Close with overlay click
+            document.getElementById('helpPopupOverlay').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeHelpPopup();
+                }
+            });
+        }
+        
+        function closeHelpPopup() {
+            const overlay = document.getElementById('helpPopupOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initViewer);
+    </script>
+</body>
+</html>

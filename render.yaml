@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: step-to-dxf-converter
+    env: docker
+    dockerfilePath: ./Dockerfile
+    region: oregon
+    plan: free
+    buildCommand: ""
+    startCommand: "python app.py"
+    healthCheckPath: /
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    disk:
+      name: step-converter-disk
+      mountPath: /tmp
+      sizeGB: 1

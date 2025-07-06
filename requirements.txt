@@ -1,0 +1,8 @@
+Flask==2.3.3
+ezdxf>=1.0.0
+pythonocc-core
+Werkzeug==2.3.7
+numpy
+matplotlib
+svgwrite
+gunicorn
