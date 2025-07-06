@@ -1,0 +1,16 @@
+name: step-to-dxf
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pythonocc-core
+  - flask=2.3.3
+  - numpy
+  - matplotlib
+  - pip
+  - pip:
+    - ezdxf>=1.0.0
+    - Werkzeug==2.3.7
+    - svgwrite
+    - gunicorn
