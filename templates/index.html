@@ -1140,6 +1140,9 @@
                             faceObjects.push(mesh);
                             
                             console.log(`Successfully added face ${face.id} with ${vertices.length/3} vertices and ${indices.length/3} triangles`);
+                            
+                            // Force render after adding each mesh
+                            renderer.render(scene, camera);
                         } else {
                             console.warn(`Face ${face.id} has insufficient mesh data: ${vertices.length/3} vertices, ${indices.length/3} triangles`);
                         }
@@ -1163,14 +1166,20 @@
                 console.log('Model bounds:', { center, size, maxDim });
                 
                 // Position camera at appropriate distance
-                const distance = maxDim * 2;
+                // Handle flat models (all Z coordinates are 0)
+                const distance = Math.max(maxDim * 2, 500); // Minimum distance for flat models
+                const zOffset = maxDim > 0 ? distance : 1000; // Use large Z offset for flat models
+                
                 camera.position.set(
-                    center.x + distance,
-                    center.y + distance,
-                    center.z + distance
+                    center.x,
+                    center.y,
+                    center.z + zOffset
                 );
                 controls.target.copy(center);
                 controls.update();
+                
+                // Force a render to update the view
+                renderer.render(scene, camera);
                 
                 console.log('Camera positioned at:', camera.position);
             } else {
