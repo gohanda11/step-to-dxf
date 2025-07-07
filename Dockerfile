@@ -6,18 +6,18 @@ WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
-# PPAを追加してPython 3.9をインストール
+# PPAを追加してPython 3.10をインストール（pythonocc-coreと互換性があるバージョン）
 RUN apt-get update && apt-get install -y \
     software-properties-common \
     && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update
 
-# Python 3.9と必要な依存関係をインストール
+# Python 3.10と必要な依存関係をインストール
 RUN apt-get install -y \
-    python3.9 \
-    python3.9-dev \
-    python3.9-distutils \
-    python3.9-venv \
+    python3.10 \
+    python3.10-dev \
+    python3.10-distutils \
+    python3.10-venv \
     build-essential \
     cmake \
     git \
@@ -38,12 +38,12 @@ RUN apt-get install -y \
     libopencascade-visualization-7.6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Python 3.9をデフォルトのpythonとして設定
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.9 1
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
+# Python 3.10をデフォルトのpythonとして設定
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
 # pipをインストール
-RUN curl https://bootstrap.pypa.io/get-pip.py | python3.9
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.10
 
 # Pythonバージョンの確認
 RUN python --version && python3 --version
@@ -58,19 +58,22 @@ RUN pip install --no-cache-dir \
     gunicorn \
     matplotlib
 
-# Try installing pythonocc-core directly with pip first
-RUN pip install --no-cache-dir pythonocc-core==7.7.2 || echo "pip install failed, trying conda..."
-
-# If pip fails, install Miniconda and use conda
-RUN if ! python -c "from OCC.Core.STEPControl import STEPControl_Reader" 2>/dev/null; then \
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+# Install Miniconda for Python 3.10
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py310_24.1.2-0-Linux-x86_64.sh -O /tmp/miniconda.sh && \
     bash /tmp/miniconda.sh -b -p /opt/conda && \
-    rm /tmp/miniconda.sh && \
-    /opt/conda/bin/conda install -c conda-forge -y pythonocc-core=7.7.2; \
-    fi
+    rm /tmp/miniconda.sh
 
-# Update PATH if conda was installed
+# Update PATH to use conda
 ENV PATH="/opt/conda/bin:$PATH"
+
+# Create conda environment with Python 3.10 and install pythonocc-core
+RUN conda create -n step-env python=3.10 -y && \
+    conda install -n step-env -c conda-forge pythonocc-core=7.7.2 numpy flask werkzeug matplotlib -y && \
+    /opt/conda/envs/step-env/bin/pip install ezdxf svgwrite gunicorn
+
+# Activate environment permanently
+ENV CONDA_DEFAULT_ENV=step-env
+ENV PATH="/opt/conda/envs/step-env/bin:$PATH"
 
 # インストール確認
 RUN python -c "from OCC.Core.STEPControl import STEPControl_Reader; print('✅ pythonocc-core successfully installed')" || \

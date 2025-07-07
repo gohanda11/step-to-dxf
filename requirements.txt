@@ -1,4 +1,5 @@
-# Main dependencies
+# Main dependencies for pip-based installation
+# Note: pythonocc-core is installed via conda in Docker only
 ezdxf>=1.0.0
 svgwrite
 gunicorn
@@ -6,6 +7,3 @@ Flask==2.3.3
 Werkzeug==2.3.7
 numpy
 matplotlib
-
-# Try to install pythonocc-core via pip as fallback
-pythonocc-core==7.7.2
