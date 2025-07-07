@@ -3,6 +3,7 @@ services:
     name: step-to-dxf-converter
     env: docker
     dockerfilePath: ./Dockerfile
+    dockerCommand: python app.py
     region: oregon
     plan: free
     healthCheckPath: /
@@ -11,6 +12,8 @@ services:
         value: production
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: PORT
+        value: "5000"
     disk:
       name: step-converter-disk
       mountPath: /tmp
