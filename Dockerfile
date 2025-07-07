@@ -58,8 +58,16 @@ RUN pip install --no-cache-dir \
     gunicorn \
     matplotlib
 
-# pythonocc-coreをpipから直接インストール（最新版を試す）
-RUN pip install --no-cache-dir pythonocc-core==7.7.2
+# Minicondaをインストール
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    bash /tmp/miniconda.sh -b -p /opt/conda && \
+    rm /tmp/miniconda.sh
+
+# condaをPATHに追加
+ENV PATH="/opt/conda/bin:$PATH"
+
+# pythonocc-coreをcondaでインストール
+RUN conda install -c conda-forge -y pythonocc-core=7.7.2
 
 # インストール確認
 RUN python -c "from OCC.Core.STEPControl import STEPControl_Reader; print('✅ pythonocc-core successfully installed')" || \
@@ -79,8 +87,4 @@ ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
 
 # アプリケーションを起動
-<<<<<<< HEAD
 CMD ["python", "app.py"]
-=======
-CMD ["python", "app.py"]
->>>>>>> 71440361357331a598aad7874ae4bb928c8fe34e
