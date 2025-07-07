@@ -1,0 +1,11 @@
+# Note: pythonocc-core is installed via conda in Dockerfile
+# These are pip-only dependencies
+ezdxf>=1.0.0
+svgwrite
+gunicorn
+
+# These are installed via conda but kept here for local development
+Flask==2.3.3
+Werkzeug==2.3.7
+numpy
+matplotlib
