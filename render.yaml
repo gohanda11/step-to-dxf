@@ -5,8 +5,6 @@ services:
     dockerfilePath: ./Dockerfile
     region: oregon
     plan: free
-    buildCommand: ""
-    startCommand: "python app.py"
     healthCheckPath: /
     envVars:
       - key: FLASK_ENV
