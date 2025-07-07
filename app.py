@@ -2260,8 +2260,4 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
     debug_mode = os.environ.get('FLASK_ENV') == 'development'
-<<<<<<< HEAD
     app.run(debug=debug_mode, host='0.0.0.0', port=port, threaded=True, use_reloader=False)
-=======
-    app.run(debug=debug_mode, host='0.0.0.0', port=port, threaded=True, use_reloader=False)
->>>>>>> 71440361357331a598aad7874ae4bb928c8fe34e

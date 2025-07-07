@@ -8,8 +8,4 @@ gunicorn
 Flask==2.3.3
 Werkzeug==2.3.7
 numpy
-<<<<<<< HEAD
 matplotlib
-=======
-matplotlib
->>>>>>> 71440361357331a598aad7874ae4bb928c8fe34e
