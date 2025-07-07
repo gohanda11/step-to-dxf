@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update
 
-# Python 3.10と必要な依存関係をインストール
+# Python 3.10と必要な依存関係をインストール（OpenCASCADEは除く）
 RUN apt-get install -y \
     python3.10 \
     python3.10-dev \
@@ -29,14 +29,13 @@ RUN apt-get install -y \
     libxext6 \
     libxrender-dev \
     libgomp1 \
-    # OpenCASCADE dependencies
-    libopencascade-dev \
-    libopencascade-foundation-7.6 \
-    libopencascade-modeling-algorithms-7.6 \
-    libopencascade-modeling-data-7.6 \
-    libopencascade-ocaf-7.6 \
-    libopencascade-visualization-7.6 \
     && rm -rf /var/lib/apt/lists/*
+
+# Try to install OpenCASCADE if available (optional)
+RUN apt-get update && apt-get install -y \
+    libopencascade-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    || echo "OpenCASCADE not available via apt, will use conda version"
 
 # Python 3.10をデフォルトのpythonとして設定
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
@@ -58,22 +57,17 @@ RUN pip install --no-cache-dir \
     gunicorn \
     matplotlib
 
-# Install Miniconda for Python 3.10
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py310_24.1.2-0-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+# Install Miniconda
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
     bash /tmp/miniconda.sh -b -p /opt/conda && \
     rm /tmp/miniconda.sh
 
 # Update PATH to use conda
 ENV PATH="/opt/conda/bin:$PATH"
 
-# Create conda environment with Python 3.10 and install pythonocc-core
-RUN conda create -n step-env python=3.10 -y && \
-    conda install -n step-env -c conda-forge pythonocc-core=7.7.2 numpy flask werkzeug matplotlib -y && \
-    /opt/conda/envs/step-env/bin/pip install ezdxf svgwrite gunicorn
-
-# Activate environment permanently
-ENV CONDA_DEFAULT_ENV=step-env
-ENV PATH="/opt/conda/envs/step-env/bin:$PATH"
+# Install pythonocc-core and dependencies via conda
+RUN conda install -c conda-forge python=3.10 pythonocc-core numpy flask werkzeug matplotlib -y && \
+    pip install ezdxf svgwrite gunicorn
 
 # インストール確認
 RUN python -c "from OCC.Core.STEPControl import STEPControl_Reader; print('✅ pythonocc-core successfully installed')" || \
