@@ -47,17 +47,7 @@ RUN curl https://bootstrap.pypa.io/get-pip.py | python3.10
 # Pythonバージョンの確認
 RUN python --version && python3 --version
 
-# 基本的なPython依存関係をインストール
-RUN pip install --no-cache-dir \
-    numpy \
-    flask==2.3.3 \
-    Werkzeug==2.3.7 \
-    ezdxf>=1.0.0 \
-    svgwrite \
-    gunicorn \
-    matplotlib
-
-# Install Miniconda
+# Install Miniconda first
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
     bash /tmp/miniconda.sh -b -p /opt/conda && \
     rm /tmp/miniconda.sh
@@ -65,9 +55,9 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 # Update PATH to use conda
 ENV PATH="/opt/conda/bin:$PATH"
 
-# Install pythonocc-core and dependencies via conda
-RUN conda install -c conda-forge python=3.10 pythonocc-core numpy flask werkzeug matplotlib -y && \
-    pip install ezdxf svgwrite gunicorn
+# Install all dependencies via conda and pip in correct order
+RUN conda install -c conda-forge python=3.10 pythonocc-core numpy matplotlib -y && \
+    pip install --no-cache-dir flask==2.3.3 Werkzeug==2.3.7 ezdxf>=1.0.0 svgwrite gunicorn
 
 # インストール確認
 RUN python -c "from OCC.Core.STEPControl import STEPControl_Reader; print('✅ pythonocc-core successfully installed')" || \
