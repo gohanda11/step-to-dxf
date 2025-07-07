@@ -79,4 +79,8 @@ ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
 
 # アプリケーションを起動
+<<<<<<< HEAD
 CMD ["python", "app.py"]
+=======
+CMD ["python", "app.py"]
+>>>>>>> 71440361357331a598aad7874ae4bb928c8fe34e
